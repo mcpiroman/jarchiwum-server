@@ -34,11 +34,11 @@ export async function getRechatChunk(req: Request, res: Response, next: () => vo
     else
         eventsEndTime.setTime(eventsEndTime.getTime() + videoDurationMs)
     
-   /*  const eventsStartTime = new Date(Date.UTC(2018,11-1,1, 1,0,0)) //new Date(Date.UTC(2019,7-1,7, 15,16,32))
-    const eventsEndTime = new Date(Date.UTC(2018,11-1,1, 3,0,0)) //new Date(Date.UTC(2019,7-1,7, 17,25,0))
+   /*  const eventsStartTime = new Date(Date.UTC(2019,8-1,15, 12,0,0)) //new Date(Date.UTC(2019,7-1,7, 15,16,32))
+    const eventsEndTime = new Date(Date.UTC(2019,8-1,15, 18,0,0)) //new Date(Date.UTC(2019,7-1,7, 17,25,0))
     const videoStartTime = eventsStartTime */
         
-    const poorchatEvents = await getPoorchatEventsInRange(eventsStartTime, eventsEndTime, 0)
+    const poorchatEvents = await getPoorchatEventsInRange(eventsStartTime, eventsEndTime, 40)
     
     const result = getRechatEventsMessage(poorchatEvents, videoStartTime)
     res.contentType('text/plain').send(result)

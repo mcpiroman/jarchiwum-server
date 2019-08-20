@@ -26,40 +26,82 @@ export default class DedicatedHistoryProvider implements IPoorchatHistoryProvide
         const fromDay = Utils.getDayFromDate(timeFrom)
         const toDay = Utils.getDayFromDate(timeTo)
         
+        let firstFileEventsIterable: Iterable<PoorchatEvent> | null = null
+        let firstFile: {day: Date, index: number} | null = null
+        
         let fileIndex = 0
         let fileDay = new Date(fromDay)
-        let firstFilePrecedingMessages: number | null = null
         let availableTimeFrom: Date | null = null
         let availableTimeTo: Date | null = null
         for(let isFirstFile = true; fileDay <= toDay; isFirstFile = false){ 
             const nextFile = this.findNextFile(fileDay, isFirstFile ? undefined : fileIndex, 'forward', toDay)
             if(nextFile == null)
                 break
-        
+                
             fileDay = nextFile.day
             fileIndex = nextFile.index
             
             const filePath = this.getLogFilePath(fileDay, fileIndex)
-            const {events: eventsFromFile, 
-                reachedLast, 
-                gotPrecedingMessages, 
-                availableTimeFrom: fileAvailableTimeFrom, 
-                availableTimeTo: fileAvailableTimeTo 
-            } = await this.getEventsRangeInFile(filePath, fileDay, timeFrom, timeTo, firstFilePrecedingMessages == null ? precedingMessages : 0)
+            const eventsIterable = await this.getEventsFromFile(filePath, fileDay, timeFrom)
             
-            events.push(...eventsFromFile)
-            if(firstFilePrecedingMessages == null)
-                firstFilePrecedingMessages = parseInt(gotPrecedingMessages.toString()) // Hack to bypass TS bug
-            
-            if(availableTimeFrom == null)
-                availableTimeFrom = fileAvailableTimeFrom
-            availableTimeTo = fileAvailableTimeTo
+            let reachedLast = true
+            for(const event of eventsIterable){
+                if(event.time > timeTo){
+                    reachedLast = false
+                    break
+                }
+
+                events.push(event)
+                
+                if(firstFile == null)
+                    firstFile = nextFile
+                if(firstFileEventsIterable == null)
+                    firstFileEventsIterable = eventsIterable
+                
+                availableTimeTo = new Date(event.time)
+                if(availableTimeFrom == null)
+                    availableTimeFrom = new Date(event.time)
+            }
                 
             if(!reachedLast && Utils.isSameDay(fileDay, timeTo))
                 break
         }
         
-        if(firstFilePrecedingMessages || 0 < precedingMessages){
+        if(precedingMessages > 0 && firstFile){
+            let fileDay = new Date(firstFile.day)
+            let fileIndex = firstFile.index
+            let eventsIterator = firstFileEventsIterable![Symbol.iterator]()
+            let gotPrecedingMessages = 0
+            while(true){
+                while(gotPrecedingMessages < precedingMessages){
+                    const {value, done} = eventsIterator.next(true)
+                    
+                    if(done)
+                        break
+                        
+                    if(value.time < timeFrom){
+                        events.splice(0, 0, value)
+                        
+                        if([PoorchatEventType.Message, PoorchatEventType.ActionMessage, PoorchatEventType.Notice].includes(value.type))
+                            gotPrecedingMessages++
+                    }
+                }
+                
+                if(gotPrecedingMessages == precedingMessages)
+                    break
+                
+                const searchLimitDay = new Date(fromDay)
+                searchLimitDay.setUTCDate(searchLimitDay.getUTCDate() - 1)
+                const nextFile = this.findNextFile(fileDay, fileIndex, 'backward', searchLimitDay)
+                
+                if(nextFile == null)
+                    break
+                    
+                fileDay = nextFile.day
+                fileIndex = nextFile.index
+                const filePath = this.getLogFilePath(fileDay, fileIndex)
+                eventsIterator = (await this.getEventsFromFile(filePath, fileDay, timeFrom))[Symbol.iterator]()
+            }
             
         }
         
@@ -69,9 +111,9 @@ export default class DedicatedHistoryProvider implements IPoorchatHistoryProvide
         }
     }
 
-    private findNextFile(prevFileDay: Date, prevFileIndex: number | undefined, direction: 'forward' | 'backwards', limitDay: Date): 
+    private findNextFile(prevFileDay: Date, prevFileIndex: number | undefined, direction: 'forward' | 'backward', limitDay: Date): 
         {day: Date, index: number} | null {
-        if(direction == 'backwards' && prevFileIndex != undefined && prevFileIndex > 0){
+        if(direction == 'backward' && prevFileIndex != undefined && prevFileIndex > 0){
             const fileIndex = prevFileIndex - 1
             const filePath = this.getLogFilePath(prevFileDay, fileIndex)
             
@@ -122,61 +164,31 @@ export default class DedicatedHistoryProvider implements IPoorchatHistoryProvide
         return path.join(Config.DEDICATED_LOGS_PATH!, `${dateString}-${index}.txt`)
     }
     
-    private async getEventsRangeInFile(filePath: string, day: Date, timeFrom: Date, timeTo: Date, precedingMessages: number): 
-        Promise<{events: PoorchatEvent[], availableTimeFrom: Date | null, availableTimeTo: Date | null, reachedFirst: boolean, reachedLast: Boolean, gotPrecedingMessages: number}>
+    private async getEventsFromFile(filePath: string, day: Date, pivotTime: Date)
+        : Promise<Iterable<PoorchatEvent>>
     {
         const file = await fs.promises.readFile(filePath, { encoding: 'utf8' , flag: 'r'})
         const lines = file.split('\n')
         
-        if(lines.length == 0)
-            return { events: [],
-                availableTimeFrom: null,
-                availableTimeTo: null,
-                reachedFirst: true, 
-                reachedLast: true, 
-                gotPrecedingMessages: 0
-            }
-
         const allEvents = <PoorchatEvent[]>lines
             .map(eventText => this.parseEvent(day, eventText))
             .filter(event => event)
-            
-        let startIndex = 0
-        for(; startIndex < allEvents.length; startIndex++){
-            const event = allEvents[startIndex]
-            if(event && event.time >= timeFrom)
-            break
-        }
         
-        let endIndex = startIndex
-        for(; endIndex < allEvents.length; endIndex++){
-            const event = allEvents[endIndex]
-            if(event && event.time > timeTo)
+        let pivotIndex = 0
+        for(; pivotIndex < allEvents.length; pivotIndex++){
+            const event = allEvents[pivotIndex]
+            if(event && event.time >= pivotTime)
                 break
         }
-        
-        let gotPrecedingMessages = 0
-        for(; startIndex >= 0 && gotPrecedingMessages < precedingMessages; startIndex--){
-            const event = allEvents[endIndex]
-            if(event && event.type == PoorchatEventType.Message)
-                gotPrecedingMessages++
-        }
-
-        const events = allEvents
-            .slice(startIndex, endIndex)
-            .filter((event, index, arr) => { // Remove duplicated events by msgid
-                if(!event.ircTags || !event.ircTags.has('msgid'))
-                    return true
-                const msgid = event.ircTags.get('msgid')
-                return arr.findIndex(e => e.ircTags != undefined && e.ircTags.get('msgid') === msgid) === index
-            })
-            
-        return {events,
-            availableTimeFrom: allEvents.length == 0 ? null : allEvents[0].time,
-            availableTimeTo: allEvents.length == 0 ? null : allEvents[allEvents.length - 1].time,
-            reachedFirst: startIndex == 0, 
-            reachedLast: endIndex == allEvents.length,
-            gotPrecedingMessages
+    
+        return {
+            *[Symbol.iterator]() {
+                let index = pivotIndex
+                while(index >= 0 && index < allEvents.length){
+                    const backward = yield allEvents[index]
+                    index += backward ? -1 : 1
+                }
+            }
         }
     }
     

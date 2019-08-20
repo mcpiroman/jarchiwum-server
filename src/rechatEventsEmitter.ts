@@ -40,8 +40,8 @@ export function getRechatEventsMessage(poorchatEvents: PoorchatEvent[], streamSt
         const ircTagsStr = [...(poorchatEvent.ircTags || new Map()).entries()]
             .map(keyValuePair => keyValuePair[0] + '=' + keyValuePair[1])
             .join(';')
-        const timeStr = (poorchatEvent.time.getTime() - streamStartTime.getTime())
-        eventsStr += `${timeStr} ${eventTypeStr} @${ircTagsStr} ${contentStr}\n`
+        const playerTime = Math.max(poorchatEvent.time.getTime() - streamStartTime.getTime(), 0)
+        eventsStr += `${playerTime} ${eventTypeStr} @${ircTagsStr} ${contentStr}\n`
     }
     
     const metadata = {

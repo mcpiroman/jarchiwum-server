@@ -1,7 +1,7 @@
 import { Response, Request } from 'express';
 import { getPoorchatEventsInRange } from './poorchatHistory'
-import { getRechatEventsMessage } from './rechatEventsEmitter'
-import {IStreamingService, twitchService}  from './streamingService'
+import { generateRechatEventsMessage } from './rechatEventsEmitter'
+import { IStreamingService, twitchService }  from './streamingService'
 
 export async function getRechatChunk(req: Request, res: Response, next: () => void): Promise<void>{
     const reqParams = req.params as any
@@ -38,9 +38,9 @@ export async function getRechatChunk(req: Request, res: Response, next: () => vo
     const eventsEndTime = new Date(Date.UTC(2019,8-1,15, 18,0,0)) //new Date(Date.UTC(2019,7-1,7, 17,25,0))
     const videoStartTime = eventsStartTime */
         
-    const poorchatEvents = await getPoorchatEventsInRange(eventsStartTime, eventsEndTime, 40)
+    const {events: poorchatEvents, availableTimeFrom, availableTimeTo} = await getPoorchatEventsInRange(eventsStartTime, eventsEndTime, 40)
     
-    const result = getRechatEventsMessage(poorchatEvents, videoStartTime)
+    const result = generateRechatEventsMessage(poorchatEvents, availableTimeFrom, availableTimeTo, videoStartTime)
     res.contentType('text/plain').send(result)
     
     next()

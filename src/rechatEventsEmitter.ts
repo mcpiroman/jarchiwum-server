@@ -1,7 +1,7 @@
 import { PoorchatEvent, PoorchatEventType, PoorchatEmbedEvent, PoorchatTitleChangedEvent } from './poorchatHistory'
 
 
-export function getRechatEventsMessage(poorchatEvents: PoorchatEvent[], streamStartTime: Date): string {
+export function generateRechatEventsMessage(poorchatEvents: PoorchatEvent[], eventsAvailableFrom: Date | null, eventsAvailableTo: Date | null, streamStartTime: Date): string {
     let eventsStr = ''
     
     for(const poorchatEvent of poorchatEvents){
@@ -40,13 +40,20 @@ export function getRechatEventsMessage(poorchatEvents: PoorchatEvent[], streamSt
         const ircTagsStr = [...(poorchatEvent.ircTags || new Map()).entries()]
             .map(keyValuePair => keyValuePair[0] + '=' + keyValuePair[1])
             .join(';')
-        const playerTime = Math.max(poorchatEvent.time.getTime() - streamStartTime.getTime(), 0)
-        eventsStr += `${playerTime} ${eventTypeStr} @${ircTagsStr} ${contentStr}\n`
+        eventsStr += `${toPlayerTime(poorchatEvent.time)} ${eventTypeStr} @${ircTagsStr} ${contentStr}\n`
+        
+        
     }
     
     const metadata = {
-        streamStartTime: streamStartTime
+        streamStartTime: streamStartTime,
+        availableFrom: eventsAvailableFrom ? toPlayerTime(eventsAvailableFrom) : null,
+        availableTo: eventsAvailableTo ? toPlayerTime(eventsAvailableTo) : null
     }
     
     return JSON.stringify(metadata) + '\n' + eventsStr
+    
+    function toPlayerTime(realTime: Date) {
+        return Math.max(realTime.getTime() - streamStartTime.getTime(), 0)
+    }
 }

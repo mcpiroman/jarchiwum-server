@@ -58,13 +58,14 @@ const historyProviders = [
     new ServerHistoryProvider()
 ]
 
-export async function getPoorchatEventsInRange(timeFrom: Date, timeTo: Date, precedingMessages?: number): Promise<PoorchatEvent[]>{
+export async function getPoorchatEventsInRange(timeFrom: Date, timeTo: Date, precedingMessages?: number): 
+    Promise<{events: PoorchatEvent[], availableTimeFrom: Date | null, availableTimeTo: Date | null}>{
     // todo: mix events form providers
     let {events, availableTimeFrom, availableTimeTo} = await historyProviders[0].getEventsInRange(timeFrom, timeTo, precedingMessages)
     
-    if(events.length == 0){
+    /* if(events.length == 0){
         events = (await historyProviders[1].getEventsInRange(timeFrom, timeTo, precedingMessages)).events
-    }
+    } */
     
-    return events
+    return {events, availableTimeFrom, availableTimeTo}
 }

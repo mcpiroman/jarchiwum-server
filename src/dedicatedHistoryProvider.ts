@@ -22,7 +22,7 @@ export default class DedicatedHistoryProvider implements IPoorchatHistoryProvide
             
         precedingMessages = precedingMessages || 0
             
-        const events: PoorchatEvent[] = []
+        let events: PoorchatEvent[] = []
         const fromDay = Utils.getDayFromDate(timeFrom)
         const toDay = Utils.getDayFromDate(timeTo)
         
@@ -102,8 +102,14 @@ export default class DedicatedHistoryProvider implements IPoorchatHistoryProvide
                 const filePath = this.getLogFilePath(fileDay, fileIndex)
                 eventsIterator = (await this.getEventsFromFile(filePath, fileDay, timeFrom))[Symbol.iterator]()
             }
-            
         }
+        
+        events = events.filter((event, index, arr) => { // Remove duplicated events by msgid
+            if(!event.ircTags || !event.ircTags.has('msgid'))
+                return true
+            const msgid = event.ircTags.get('msgid')
+            return arr.findIndex(e => e.ircTags != undefined && e.ircTags.get('msgid') === msgid) === index
+        })
         
         return { events,
             availableTimeFrom,

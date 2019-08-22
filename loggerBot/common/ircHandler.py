@@ -44,7 +44,7 @@ class IrcHandler:
             self.output_func("PONG irc.poorchat.net\r\n")
         elif irc_command == "001":
             self.output_func(f"JOIN {self.target_channel}\r\n")
-            print(f"IRC: Joining {self.target_channel}")
+            utils.print_with_time(f"IRC: Joining {self.target_channel}")
         elif irc_command == "005": #RPL_ISUPPORT 
             self._handle_isupportrpl(irc_tags, irc_prefix, irc_args, receive_time)
         elif irc_command == "PRIVMSG":
@@ -70,7 +70,6 @@ class IrcHandler:
                 self.current_topic = irc_args[2]
                 #print("Topic: ", irc_args[2])                        
         elif irc_command == "391": #RPL_TIME
-            print("IRC: Got time")
             self.last_irc_server_time_refresh_time = datetime.datetime.now()
             self.just_irc_server_time_request = False
         else:
@@ -88,10 +87,8 @@ class IrcHandler:
 
         if self.last_user_list_refresh_time + IrcHandler.NAME_LIST_REFRESH_INTERVAL <= datetime.datetime.now() and not self.just_sent_user_list_request:
             self.just_sent_user_list_request = True
-            print("IRC: Requesting names")
             self.output_func(f"NAMES #{self.target_channel}\r\n")
         if self.last_irc_server_time_refresh_time + IrcHandler.NAME_LIST_REFRESH_INTERVAL <= datetime.datetime.now() and not self.just_irc_server_time_request:
-            print("IRC: Requesting time")
             self.output_func("TIME\r\n")
             self.just_irc_server_time_request = True
 
@@ -155,7 +152,6 @@ class IrcHandler:
             self.current_users[user] = set(user_str[:nick_start])
     
     def _handle_endofnamesrpl(self, irc_tags, irc_prefix, irc_args, receive_time):
-        print("IRC: Got names")
         self.last_user_list_refresh_time = datetime.datetime.now()
         self.just_sent_user_list_request = False
         self.remove_users_on_next_namesrpl = True

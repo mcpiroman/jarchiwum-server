@@ -17,7 +17,7 @@ irc_messages_buffer = ""
 irc_handler = None
 
 def main():
-    arg_parser = argparse.ArgumentParser("poorchat_log_reemiter")
+    arg_parser = argparse.ArgumentParser("poorchat_log_reformater")
     arg_parser.add_argument("raw_input", help="Directory or file to take raw websocket output logs from.", type=str)
     arg_parser.add_argument("formated_output_dir", help="Directory to place formated output logs.", type=str)
     args = arg_parser.parse_args()
@@ -29,7 +29,7 @@ def main():
 
     for input_file_path in input_file_paths:
         with open(input_file_path, 'r', encoding='utf-8') as input_file:
-            print('Reemitting file ' + input_file_path)
+            print('Output file ' + input_file_path)
             global formated_output
             formated_output = FormatedOutputFileManager(args.formated_output_dir)
 

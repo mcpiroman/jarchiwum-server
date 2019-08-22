@@ -3,6 +3,9 @@ import datetime
 import re
 import os
 
+def print_with_time(*args):
+    print('[' + datetime.datetime.now().strftime("%H:%M:%S") + ']', *args)
+
 def str_2_base64(data, encoding="utf-8"):
     return str(base64.b64encode(data.encode(encoding)), encoding)
 

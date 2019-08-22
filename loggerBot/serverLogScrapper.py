@@ -1,11 +1,10 @@
 import urllib.request
 from bs4 import BeautifulSoup
 
-#dates = ["2018-10-08"]
-#phpsessionid = "liq7n066cqu27h2pgir5teul77";
+
+outputDir = input("Output dir: ")
 dates = input("Dates: ").split()
 phpsessionid = input("Phpsessionid: ")
-outputDic = "F:\\poorchatLogs\\server"
 headers = {}
 
 def setHeaders():
@@ -15,7 +14,7 @@ def setHeaders():
 setHeaders()
 for date in dates:
     print("date:", date)
-    filePath = outputDic + "\\" + str(date) + ".log" 
+    filePath = outputDir + "\\" + str(date) + ".log" 
     totalPages = 1
     currPage = 1
     totalPagesResolved = False

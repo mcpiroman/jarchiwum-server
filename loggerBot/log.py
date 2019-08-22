@@ -61,14 +61,13 @@ def main():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("## closing..")
+        utils.print_with_time("## exiting..")
         reconnect_on_close = False
         web_socket.close()
-        print("## closed")
         sys.exit(0)
     
 def on_ws_open(ws):
-    print("WS: Opened")
+    utils.print_with_time("WS: Opened")
     raw_ws_output.connection_opened()
     irc_handler.open()
 
@@ -79,7 +78,7 @@ def on_ws_message(ws, ws_msg_base64):
         handle_irc_fragment(ws_msg_text)
     except Exception as exc:
         if not isinstance(exc, GeneratorExit):
-            print(f"Unhandled exception {type(exc)} : {exc}\nTrace: {traceback.print_exc()}")
+            utils.print_with_time(f"Unhandled exception {type(exc)} : {exc}\nTrace: {traceback.print_exc()}")
             
         if raw_ws_output is not None:
             raw_ws_output.flush()
@@ -87,11 +86,11 @@ def on_ws_message(ws, ws_msg_base64):
         raise
     
 def on_ws_error(ws, error):
-    print("WS: ERROR:", error)
+    utils.print_with_time("WS: ERROR:", error)
     raw_ws_output.connection_error(error)
 
 def on_ws_close(ws):
-    print("WS: Closed")
+    utils.print_with_time("WS: Closed")
     raw_ws_output.connection_closed()
 
 def on_irc_handler_output(irc_msg):

@@ -107,8 +107,17 @@ export default class DedicatedHistoryProvider implements IPoorchatHistoryProvide
         events = events.filter((event, index, arr) => { // Remove duplicated events by msgid
             if(!event.ircTags || !event.ircTags.has('msgid'))
                 return true
+            
             const msgid = event.ircTags.get('msgid')
-            return arr.findIndex(e => e.ircTags != undefined && e.ircTags.get('msgid') === msgid) === index
+            const prevEventIndexWithMsgid = arr.findIndex(e => e.ircTags != undefined && e.ircTags.get('msgid') === msgid)
+            
+            if(prevEventIndexWithMsgid === index)
+                return true
+                
+            if(event.type === PoorchatEventType.Embed && arr[prevEventIndexWithMsgid].type !== PoorchatEventType.Embed)
+                return true
+                
+            return false
         })
         
         return { events,

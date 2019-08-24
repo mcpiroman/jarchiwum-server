@@ -4,7 +4,7 @@ import Config from './config'
 
 export default class TwitchService implements IStreamingService{
     private readonly twitchApiAxiosInstance: AxiosInstance
-    private static readonly STREAM_START_CORRECTION = 3000 // In ms
+    private static readonly STREAM_START_CORRECTION = 6000 // In ms
     
     constructor(){
         this.twitchApiAxiosInstance = axios.create({

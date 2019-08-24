@@ -3,7 +3,7 @@ import { getPoorchatEventsInRange } from './poorchatHistory'
 import { generateRechatEventsMessage } from './rechatEventsEmitter'
 import { IStreamingService, twitchService }  from './streamingService'
 
-export async function getRechatChunk(req: Request, res: Response, next: () => void): Promise<void>{
+export async function getReplay(req: Request, res: Response, next: () => void): Promise<void>{
     const reqParams = req.params as any
     const queryParams = req.query as any
 

@@ -253,10 +253,10 @@ export default class DedicatedHistoryProvider implements IPoorchatHistoryProvide
                     type: PoorchatEventType.Notice, 
                     message: content
                 }
-            case 'title':
+            case 'topic':
                 return { ...eventCommonData, 
-                    type: PoorchatEventType.TitleChanged, 
-                    title: content
+                    type: PoorchatEventType.TopicChanged, 
+                    topic: content
                 }
             default:
                 return null

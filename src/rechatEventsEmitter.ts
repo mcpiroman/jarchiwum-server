@@ -1,4 +1,4 @@
-import { PoorchatEvent, PoorchatEventType, PoorchatEmbedEvent, PoorchatTitleChangedEvent } from './poorchatHistory'
+import { PoorchatEvent, PoorchatEventType, PoorchatEmbedEvent, PoorchatTopicChangedEvent } from './poorchatHistory'
 
 
 export function generateRechatEventsMessage(poorchatEvents: PoorchatEvent[], eventsAvailableFrom: Date | null, eventsAvailableTo: Date | null, streamStartTime: Date): string {
@@ -25,9 +25,9 @@ export function generateRechatEventsMessage(poorchatEvents: PoorchatEvent[], eve
                 eventTypeStr = 'notice'
                 contentStr = poorchatEvent.message
                 break
-            case PoorchatEventType.TitleChanged:
-                eventTypeStr = 'title'
-                contentStr = poorchatEvent.title
+            case PoorchatEventType.TopicChanged:
+                eventTypeStr = 'topic'
+                contentStr = poorchatEvent.topic
                 break
             default:
                 return assertNever(poorchatEvent)

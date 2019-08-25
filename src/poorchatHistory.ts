@@ -10,7 +10,7 @@ export enum PoorchatEventType{
     UserParts,
     UserList,*/
     Notice,
-    TitleChanged,
+    TopicChanged,
 }
 
 interface PoorchatEventBase{
@@ -19,7 +19,7 @@ interface PoorchatEventBase{
     ircTags?: Map<string, string>
 }
 
-export type PoorchatEvent = PoorchatMessageEvent | PoorchatActionMessageEvent | PoorchatEmbedEvent | PoorchatNoticeEvent | PoorchatTitleChangedEvent
+export type PoorchatEvent = PoorchatMessageEvent | PoorchatActionMessageEvent | PoorchatEmbedEvent | PoorchatNoticeEvent | PoorchatTopicChangedEvent
 
 export interface PoorchatMessageEvent extends PoorchatEventBase {
     type: PoorchatEventType.Message
@@ -43,9 +43,9 @@ export interface PoorchatNoticeEvent extends PoorchatEventBase {
     message: string
 }
 
-export interface PoorchatTitleChangedEvent extends PoorchatEventBase {
-    type: PoorchatEventType.TitleChanged
-    title: string
+export interface PoorchatTopicChangedEvent extends PoorchatEventBase {
+    type: PoorchatEventType.TopicChanged
+    topic: string
 }
 
 export interface IPoorchatHistoryProvider{
